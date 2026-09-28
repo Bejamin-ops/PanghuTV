@@ -49,7 +49,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
 
         wv.evaluateJavaScript("navigator.userAgent") { ua, _ in
             guard let ua = ua as? String else { return }
-            wv.customUserAgent = ua + " PanghuTV/1.0"
+            wv.customUserAgent = ua + " DanDanTV/1.0"
             if let url = Bundle.main.url(forResource: "index", withExtension: "html", subdirectory: "www") {
                 wv.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
             }

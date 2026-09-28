@@ -81,7 +81,7 @@
       '<rect width="300" height="450" fill="url(#g)"/>' +
       '<circle cx="248" cy="60" r="90" fill="hsl(' + ((hue + 30) % 360) + ',60%,32%)" opacity="0.35"/>' +
       '<text x="150" y="215" font-family="PingFang SC,sans-serif" font-size="40" font-weight="700" fill="#fff" text-anchor="middle" opacity="0.95">' + tsp + '</text>' +
-      '<text x="18" y="430" font-family="sans-serif" font-size="17" fill="#ffffff99">' + cat + ' · 胖虎演示源</text>' +
+      '<text x="18" y="430" font-family="sans-serif" font-size="17" fill="#ffffff99">' + cat + ' · DanDan演示源</text>' +
       '</svg>';
     return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
   }
@@ -132,7 +132,7 @@
       vod_content: '《' + it.vod_name + '》是' + it.vod_year + '年' + it.vod_area + '出品的' + it.type_name +
         '作品，由' + it.vod_director + '执导，' + it.vod_actor + ' 领衔出演。故事围绕一场意想不到的转折展开：' +
         '平凡的日常被一封神秘来信打破，主角不得不踏上寻找真相的旅途……（本条目为演示数据，播放使用公共测试片源）',
-      vod_play_from: '胖虎线路(HLS)$$$备用线路(MP4)',
+      vod_play_from: 'DanDan线路(HLS)$$$备用线路(MP4)',
       vod_play_url: l1 + '$$$' + l2
     };
   }

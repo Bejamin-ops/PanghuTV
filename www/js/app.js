@@ -27,7 +27,7 @@
     id: 'builtin', name: '演示接口', url: '', ver: 2,
     json: {
       name: '演示接口',
-      sites: [{ key: 'demo', name: '胖虎演示', type: 3, api: 'csp_Demo', searchable: 1, quickSearch: 1, filterable: 1 }],
+      sites: [{ key: 'demo', name: 'DanDan演示', type: 3, api: 'csp_Demo', searchable: 1, quickSearch: 1, filterable: 1 }],
       lives: [
         { name: '公共直播', type: 0, url: 'https://iptv-org.github.io/iptv/countries/cn.m3u', epg: '' },
         { name: '直播备用', type: 0, url: 'https://live.fanmingming.com/tv/m3u/ipv6.m3u', epg: '' }
@@ -604,7 +604,7 @@
       '<div class="page-top"><button id="f-back" class="icon-btn">‹</button>' +
       '<div class="page-top-title">我的</div></div>' +
       '<div class="me-card"><img class="me-logo" src="assets/icon-180.png" onerror="this.style.display=\'none\'">' +
-      '<div style="flex:1;min-width:0"><div class="me-name">Panghu影视</div>' +
+      '<div style="flex:1;min-width:0"><div class="me-name">DanDan影视</div>' +
       '<div class="me-sub">' + esc(cfg().name) + ' · ' + sites().length + '个站点 · 当前：' + esc(A.site ? A.site.name : '-') + '</div></div>' +
       '<button class="icon-btn" id="me-set">⚙</button></div>' +
       '<div class="seg"><button data-tab="fav"' + (tab === 'fav' ? ' class="on"' : '') + '>收藏 ' + favs.length + '</button>' +
@@ -664,7 +664,7 @@
       '<button id="st-clearcache" class="set-btn ghost">清详情缓存</button></div></div>' +
 
       '<div class="set-group"><div class="set-title">关于</div>' +
-      '<div class="set-note">Panghu影视 v3.0 · 原生内核版<br>' +
+      '<div class="set-note">DanDan影视 v3.1 · 原生内核版<br>' +
       'Web 核心 + Android WebView 壳（无跨域HTTP桥）<br>' +
       '支持：TVBox配置导入 / CMS·JSON源 / HLS·MP4播放 / 收藏历史续播<br>' +
       '演示源为公共测试片源，请自行配置合法授权接口</div>' +
