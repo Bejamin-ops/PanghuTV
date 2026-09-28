@@ -1215,6 +1215,22 @@
     $('#view-short').addEventListener('click', function (ev) {
       if (ev.target.closest('#short-more')) { A.shortPage++; renderShort(true); }
     });
+    /* 左滑返回（屏幕左缘右滑） */
+    var swX = 0, swY = 0, swOn = false;
+    document.addEventListener('touchstart', function (ev) {
+      var t = ev.touches[0];
+      if (t.clientX <= 28) { swX = t.clientX; swY = t.clientY; swOn = true; }
+      else swOn = false;
+    }, { passive: true });
+    document.addEventListener('touchmove', function (ev) {
+      if (!swOn) return;
+      var t = ev.touches[0];
+      if (t.clientX - swX > 70 && Math.abs(t.clientY - swY) < 60) {
+        swOn = false;
+        if (A.view !== 'player' && A.stack && A.stack.length > 1) goBack();
+      }
+    }, { passive: true });
+    document.addEventListener('touchend', function () { swOn = false; }, { passive: true });
     document.addEventListener('click', function (ev) {
       var jm = ev.target.closest('[data-jumpsite]');
       if (jm) { switchSite(jm.getAttribute('data-jumpsite')); return; }

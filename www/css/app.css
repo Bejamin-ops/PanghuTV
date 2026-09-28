@@ -454,3 +454,7 @@ body.native .tabbar{padding:6px 0 8px;background:rgba(255,255,255,.98)}
 .carousel-name{font-size:15px}
 .carousel-sub{font-size:10.5px;margin-top:2px}
 .carousel-dots{right:10px;bottom:8px}
+
+/* 返回按钮下移居中 + 命中区加大 */
+.detail-top,.page-top{padding:calc(env(safe-area-inset-top) + 13px) 12px 12px}
+.detail-top .icon-btn,.page-top .icon-btn{width:40px;height:40px}

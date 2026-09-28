@@ -12,8 +12,8 @@ settings:
     CODE_SIGN_IDENTITY: ""
     DEVELOPMENT_TEAM: ""
     ENABLE_BITCODE: "NO"
-    CURRENT_PROJECT_VERSION: "34"
-    MARKETING_VERSION: "3.4.0"
+    CURRENT_PROJECT_VERSION: "35"
+    MARKETING_VERSION: "3.5.0"
     TARGETED_DEVICE_FAMILY: "1,2"
 targets:
   PanghuTV:
@@ -32,8 +32,8 @@ targets:
       path: ios-native/Info.plist
       properties:
         CFBundleDisplayName: "DanDan影视"
-        CFBundleShortVersionString: "3.4.0"
-        CFBundleVersion: "34"
+        CFBundleShortVersionString: "3.5.0"
+        CFBundleVersion: "35"
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
