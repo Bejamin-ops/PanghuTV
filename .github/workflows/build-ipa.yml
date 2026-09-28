@@ -15,17 +15,32 @@ jobs:
       - name: Install xcodegen
         run: brew install xcodegen
 
-      - name: Generate Xcode project
-        run: xcodegen generate
+      - name: Inspect project & schemes
+        run: |
+          xcodegen generate
+          xcodebuild -list || true
 
       - name: Install CocoaPods deps (MobileVLCKit)
         run: pod install --repo-update
 
+      - name: List schemes (debug)
+        run: |
+          xcodebuild -workspace PanghuTV.xcworkspace -list || true
+
       - name: Build (unsigned)
         run: |
           set -o pipefail
-          xcodebuild -workspace PanghuTV.xcworkspace \
-            -scheme PanghuTV \
+          if xcodebuild -workspace PanghuTV.xcworkspace -list | grep -q "PanghuTV"; then
+            BUILDARGS="-workspace PanghuTV.xcworkspace -scheme PanghuTV"
+          elif xcodebuild -project PanghuTV.xcodeproj -list | grep -q "PanghuTV"; then
+            echo "workspace scheme missing, using -project -scheme"
+            BUILDARGS="-project PanghuTV.xcodeproj -scheme PanghuTV"
+          else
+            echo "no scheme anywhere, using -project -target"
+            BUILDARGS="-project PanghuTV.xcodeproj -target PanghuTV -configuration Release"
+          fi
+          echo "BUILDARGS=$BUILDARGS"
+          xcodebuild $BUILDARGS \
             -configuration Release \
             -destination 'generic/platform=iOS' \
             -derivedDataPath build \
