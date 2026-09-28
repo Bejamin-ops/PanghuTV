@@ -107,7 +107,7 @@ final class VLCPlayerViewController: UIViewController {
     private func refreshLabel() {
         guard let mp = player else { return }
         let tMs = Int(mp.time.intValue)
-        let dMs = Int(mp.media?.length?.intValue ?? 0)
+        let dMs = Int(mp.media?.length.intValue ?? 0)
         func f(_ ms: Int) -> String {
             let s = max(0, ms / 1000)
             return String(format: "%d:%02d", s / 60, s % 60)
