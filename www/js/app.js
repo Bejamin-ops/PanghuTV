@@ -24,10 +24,15 @@
     '<svg xmlns="http://www.w3.org/2000/svg" width="300" height="450"><rect width="300" height="450" fill="#1a2130"/><text x="150" y="230" font-size="60" text-anchor="middle" fill="#2c364e">🎬</text></svg>');
 
   var BUILTIN = {
-    id: 'builtin', name: '演示接口', url: '', ver: 2,
+    id: 'builtin', name: '演示接口', url: '', ver: 3,
     json: {
       name: '演示接口',
-      sites: [{ key: 'demo', name: 'DanDan演示', type: 3, api: 'csp_Demo', searchable: 1, quickSearch: 1, filterable: 1 }],
+      sites: [
+        { key: 'demo', name: 'DanDan演示', type: 3, api: 'csp_Demo', searchable: 1, quickSearch: 1, filterable: 1 },
+        { key: 'bfzy', name: '暴风资源', type: 0, api: 'https://bfzyapi.com/api.php/provide/vod', searchable: 1, quickSearch: 1, filterable: 1 },
+        { key: 'jszy', name: '极速资源', type: 0, api: 'https://jszyapi.com/api.php/provide/vod', searchable: 1, quickSearch: 1, filterable: 1 },
+        { key: 'lzi', name: '长城资源', type: 0, api: 'https://cj.lziapi.com/api.php/provide/vod/at/json', searchable: 1, quickSearch: 1, filterable: 1 }
+      ],
       lives: [
         { name: '公共直播', type: 0, url: 'https://iptv-org.github.io/iptv/countries/cn.m3u', epg: '' },
         { name: '直播备用', type: 0, url: 'https://live.fanmingming.com/tv/m3u/ipv6.m3u', epg: '' }
@@ -333,7 +338,63 @@
   function loadHome(reset) {
     if (!A.site || A.loading) return;
     if (reset) { A.page = 1; $('#grid').innerHTML = skeleton(12); $('#sentinel').style.display = 'none'; }
-    A.loading = true;
+    /* 豆瓣频道（对齐 iBox/蛋蛋不语：真评分） */
+    if (A.chan !== 'rec' && window.Douban) {
+      var seqd = ++A.seq;
+      A.loading = true;
+      doubanReq().then(function (items) {
+        if (seqd !== A.seq) return;
+        A.loading = false;
+        $('#banner').innerHTML = '';
+        $('#grid').innerHTML = items.length ? items.map(doubanCard).join('')
+          : '<div class="empty">豆瓣没有返回数据</div>';
+        $('#sentinel').style.display = 'none';
+      }).catch(function (e) {
+        if (seqd !== A.seq) return;
+        A.loading = false;
+        toast('豆瓣受限，已切换片库数据');
+        loadHomeCMS(reset);
+      });
+      return;
+    }
+    loadHomeCMS(reset);
+  }
+
+  function doubanCard(v) {
+    return '<button class="card js-dcard" data-title="' + esc(v.title || v.name) + '">' +
+      '<div class="poster"><img loading="lazy" src="' + esc(v.pic) + '" ' +
+      'onerror="this.onerror=null;this.src=window.PH">' +
+      '<span class="remark">' + esc(v.rate ? '评分 ' + v.rate : '暂无评分') + '</span></div>' +
+      '<div class="c-name">' + esc(v.name) + '</div></button>';
+  }
+
+  function doubanReq() {
+    var cf = A.cf || {};
+    function notAll(v) { return v && !/全部/.test(v) ? v : ''; }
+    switch (A.chan) {
+      case 'hotmovie':
+        return Douban.byTag('movie', ({ '热度': '热门', '最新': '最新', '评分': '经典' })[cf.sort || '热度'] || '热门');
+      case 'hotseries':
+        return Douban.byTag('tv', ({ '综合': '热门', '国产剧': '国产剧', '欧美剧': '欧美剧', '日剧': '日剧', '韩剧': '韩剧', '动画': '动画' })[cf.cls || '综合'] || '热门');
+      case 'hotshow':
+        return Douban.byTag('tv', ({ '综合': '综艺', '国内': '国内综艺', '国外': '国外综艺' })[cf.cls || '综合'] || '综艺');
+      case 'moviefilter':
+        return Douban.filter('电影', [(cf.cls && cf.cls !== '全部类型') ? cf.cls : '',
+          notAll(cf.region), notAll(cf.year)].filter(Boolean));
+      case 'tvfilter':
+        return Douban.filter((cf.form === '综艺') ? '综艺' : '电视剧',
+          [(cf.cls && cf.cls !== '全部类型') ? cf.cls : '', notAll(cf.region), notAll(cf.year)].filter(Boolean));
+      case 'movierank':
+        return Douban.filter('电影', [({ '一周口碑电影榜': '冷门佳片' })[cf.rank] || '热门']);
+      case 'tvrank':
+        return Douban.byTag('tv', ({ '华语口碑剧集榜': '国产剧', '全球口碑剧集榜': '热门' })[cf.rank] || '热门');
+    }
+    return Promise.reject(new Error('unknown channel'));
+  }
+
+  function loadHomeCMS(reset) {
+    if (!A.site || A.loading) return;
+    if (reset) { A.page = 1; $('#grid').innerHTML = skeleton(12); $('#sentinel').style.display = 'none'; }
     var seq = ++A.seq;
     var q = chanQuery(); q.pg = A.page;
     CMS.list(A.site, q).then(function (r) {
@@ -1127,6 +1188,13 @@
       if (jm) { switchSite(jm.getAttribute('data-jumpsite')); return; }
       var c = ev.target.closest('.js-card');
       if (c) { openDetail(c.dataset.site, c.dataset.id); return; }
+      var dc = ev.target.closest('.js-dcard');
+      if (dc) {
+        A.searchAll = 1;
+        toast('全网找片源：' + dc.dataset.title);
+        doSearch(dc.dataset.title);
+        return;
+      }
       var e2 = ev.target.closest('.js-ep');
       if (e2) { playEp(+e2.dataset.i, 0); return; }
     });
