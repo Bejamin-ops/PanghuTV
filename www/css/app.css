@@ -447,3 +447,10 @@ body.lite .poster{box-shadow:0 1px 4px rgba(20,30,60,.10)}
 .tabbar{background:rgba(255,255,255,.98);border-top:1px solid #e8eaf0}
 .tabbar button{color:#8a90a0}
 body.native .tabbar{padding:6px 0 8px;background:rgba(255,255,255,.98)}
+
+/* banner 紧凑化（iBox 比例） */
+.carousel{aspect-ratio:12/5;margin:6px 14px 2px;border-radius:14px}
+.carousel-cap{padding:16px 14px 8px}
+.carousel-name{font-size:15px}
+.carousel-sub{font-size:10.5px;margin-top:2px}
+.carousel-dots{right:10px;bottom:8px}
