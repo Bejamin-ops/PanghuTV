@@ -21,7 +21,15 @@ jobs:
           xcodebuild -list || true
 
       - name: Install CocoaPods deps (MobileVLCKit)
-        run: pod install --repo-update
+        run: |
+          ok=0
+          for i in 1 2 3 4; do
+            echo "== pod attempt $i =="
+            if pod install --repo-update; then ok=1; break; fi
+            rm -rf Pods Podfile.lock
+            sleep 15
+          done
+          [ "$ok" = "1" ] || { echo "pod install failed after retries"; exit 1; }
 
       - name: List schemes (debug)
         run: |
