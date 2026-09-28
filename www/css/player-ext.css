@@ -43,3 +43,51 @@
 .pv-err-btns button{background:rgba(255,255,255,.12);color:#fff;border:0;border-radius:9px;
   padding:8px 14px;font-size:13px;font-weight:600}
 .pv-err-btns button:active{background:rgba(255,255,255,.24)}
+
+/* ===== iBox 风格播放面板（右侧滑出 · 选集/线路/设置） ===== */
+.pv-ibox{position:absolute;top:0;right:0;bottom:0;width:min(80vw,340px);z-index:22;
+  background:rgba(13,16,22,.97);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);
+  border-left:1px solid rgba(255,255,255,.09);
+  transform:translateX(103%);transition:transform .25s ease;display:flex;flex-direction:column}
+.pv-ibox.show{transform:translateX(0)}
+.pv-ibox-tabs{display:flex;align-items:center;gap:2px;padding:calc(env(safe-area-inset-top) + 10px) 8px 0;
+  border-bottom:1px solid rgba(255,255,255,.07)}
+.pv-ibox-tabs button{flex:1;background:none;border:0;color:rgba(255,255,255,.55);
+  font-size:14.5px;font-weight:700;padding:12px 0 10px;position:relative}
+.pv-ibox-tabs button.on{color:#fff}
+.pv-ibox-tabs button.on::after{content:'';position:absolute;left:26%;right:26%;bottom:0;height:2.5px;
+  border-radius:2px;background:var(--ac,#3d8bff)}
+.pv-ibox-tabs #pv-ibox-close{flex:none;width:38px;color:rgba(255,255,255,.6);font-size:15px;font-weight:400}
+.pv-ibox-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:12px 12px calc(env(safe-area-inset-bottom) + 20px)}
+.pv-ibox-pane.hidden{display:none}
+
+/* 选集 pane（复用 .ep 网格，面板内紧排） */
+.pv-ibox .pv-eps{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:0}
+.pv-ibox .pv-eps .ep{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);
+  color:rgba(255,255,255,.88);border-radius:9px;padding:10px 2px;font-size:12.5px;text-align:center;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pv-ibox .pv-eps .ep.on{background:var(--ac,#3d8bff);border-color:transparent;color:#fff;font-weight:800}
+
+/* 线路 pane */
+.pv-ibox-src{display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.07);color:#fff;
+  border-radius:12px;padding:13px 14px;margin-bottom:8px;font-size:14.5px}
+.pv-ibox-src.on{border-color:var(--ac,#3d8bff);background:rgba(61,139,255,.14)}
+.pv-ibox-src-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600}
+.pv-ibox-src-n{flex:none;font-size:11.5px;color:rgba(255,255,255,.5);
+  border:1px solid rgba(255,255,255,.16);border-radius:6px;padding:1px 7px}
+.pv-ibox-src-ok{flex:none;color:var(--ac2,#6aa9ff);font-weight:800}
+.pv-ibox-empty{color:rgba(255,255,255,.45);text-align:center;padding:40px 0;font-size:13.5px}
+
+/* 设置 pane */
+.pv-ibox-sect{color:rgba(255,255,255,.42);font-size:12px;font-weight:700;
+  padding:14px 2px 8px;letter-spacing:.5px}
+.pv-ibox-speeds{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding-bottom:4px}
+.pv-ibox-speeds button{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);
+  color:rgba(255,255,255,.85);border-radius:9px;padding:9px 0;font-size:13px;font-weight:600}
+.pv-ibox-speeds button.on{background:var(--ac,#3d8bff);border-color:transparent;color:#fff;font-weight:800}
+.pv-ibox-row{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.06);color:rgba(255,255,255,.9);
+  border-radius:12px;padding:13px 14px;margin-bottom:8px;font-size:14px;text-align:left}
+.pv-ibox-row:active{background:rgba(255,255,255,.1)}
+.pv-ibox-val{color:rgba(255,255,255,.5);font-size:12.5px}

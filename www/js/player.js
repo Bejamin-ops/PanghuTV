@@ -31,10 +31,16 @@
     var h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), s = t % 60;
     return (h ? h + ':' + (m < 10 ? '0' : '') : '') + m + ':' + (s < 10 ? '0' : '') + s;
   }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
   function $(id) { return document.getElementById(id); }
 
   window.Player = {
     isOpen: function () { return !!S; },
+    curIndex: function () { return S ? (S.opts.epIndex || 0) : 0; },
 
     open: function (opts) {
       this.close(true);
@@ -75,14 +81,21 @@
               '<span id="pv-dur" class="pv-time">00:00</span>' +
             '</div>' +
           '</div>' +
-          '<div id="pv-drawer" class="pv-drawer">' +
-            '<div class="pv-drawer-head"><span>选集</span><span class="pv-flex"></span>' +
-              '<button id="pv-drawer-close" class="pv-btn">✕</button></div>' +
-            '<div id="pv-eps-list" class="pv-eps"></div>' +
+          '<div id="pv-ibox" class="pv-ibox">' +
+            '<div class="pv-ibox-tabs" id="pv-ibox-tabs">' +
+              '<button data-t="eps" class="on">选集</button>' +
+              '<button data-t="src">线路</button>' +
+              '<button data-t="set">设置</button>' +
+              '<button id="pv-ibox-close">✕</button>' +
+            '</div>' +
+            '<div class="pv-ibox-body" id="pv-ibox-body">' +
+              '<div class="pv-ibox-pane" data-p="eps"><div class="pv-eps" id="pv-eps-list"></div></div>' +
+              '<div class="pv-ibox-pane hidden" data-p="src"><div id="pv-ibox-srcs"></div></div>' +
+              '<div class="pv-ibox-pane hidden" data-p="set"><div id="pv-ibox-set"></div></div>' +
+            '</div>' +
           '</div>' +
         '</div>' +
-        '<div id="pv-sheet" class="pv-sheet-mask"></div>' +
-        '<div id="pv-morepanel" class="pv-more"></div>';
+        '<div id="pv-sheet" class="pv-sheet-mask"></div>';
 
       S = { opts: opts, video: $('pv-video'), hls: null, speedIdx: 0,
         lastSave: 0, hideT: null, clockT: null, seekTouch: false };
@@ -105,6 +118,7 @@
       S.opts = mergeOpts(S.opts, opts);
       $('pv-title').textContent = S.opts.title + (S.opts.epName ? ' · ' + S.opts.epName : '');
       renderEps();
+      renderSrcs();
       hideErr();
       attach(S.opts.url, S.opts.resume || 0);
       if (first && effKernel() === 'builtin') S.video.play().catch(function () {});
@@ -138,8 +152,116 @@
     var eps = S.opts.episodes || [];
     box.innerHTML = eps.map(function (e, i) {
       return '<button class="ep' + (i === S.opts.epIndex ? ' on' : '') + '" data-i="' + i + '">' +
-        String(e.name || ('第' + (i + 1) + '集')).replace(/</g, '&lt;') + '</button>';
+        esc(e.name || ('第' + (i + 1) + '集')) + '</button>';
     }).join('');
+  }
+
+  /* ===== iBox 风格面板：选集 / 线路 / 设置 ===== */
+  function renderSrcs() {
+    var box = $('pv-ibox-srcs'); if (!box || !S) return;
+    var list = S.opts.sources || [];
+    if (!list.length) { box.innerHTML = '<div class="pv-ibox-empty">当前只有单一线路</div>'; return; }
+    var cur = S.opts.srcIndex || 0;
+    box.innerHTML = list.map(function (s, i) {
+      return '<button class="pv-ibox-src' + (i === cur ? ' on' : '') + '" data-i="' + i + '">' +
+        '<span class="pv-ibox-src-name">' + esc(s.name) + '</span>' +
+        '<span class="pv-ibox-src-n">' + s.count + '集</span>' +
+        (i === cur ? '<span class="pv-ibox-src-ok">✓</span>' : '') +
+        '</button>';
+    }).join('');
+  }
+
+  function renderSet() {
+    var box = $('pv-ibox-set'); if (!box || !S) return;
+    var st = settings();
+    var sk = skipGet();
+    var speeds = [0.5, 0.75, 1, 1.25, 1.5, 2, 3];
+    var curRate = S.video.playbackRate;
+    var kern = KERNEL_META[effKernel()] ? KERNEL_META[effKernel()].name : '内置';
+    box.innerHTML =
+      '<div class="pv-ibox-sect">倍速</div>' +
+      '<div class="pv-ibox-speeds">' + speeds.map(function (s) {
+        return '<button data-rate="' + s + '"' + (Math.abs(s - curRate) < .01 ? ' class="on"' : '') + '>' + s + 'x</button>';
+      }).join('') + '</div>' +
+      '<div class="pv-ibox-sect">播放</div>' +
+      '<button class="pv-ibox-row" data-act="kernel"><span>播放内核</span><span class="pv-ibox-val">' + esc(kern) + ' ›</span></button>' +
+      '<div class="pv-ibox-row"><span>单集循环</span><span class="pv-switch' + (st.loop ? ' on' : '') + '" data-sw="loop"><i></i></span></div>' +
+      '<div class="pv-ibox-row"><span>长按3x快进</span><span class="pv-switch' + (st.longpress ? ' on' : '') + '" data-sw="longpress"><i></i></span></div>' +
+      '<button class="pv-ibox-row" data-act="sleep"><span>定时暂停</span><span class="pv-ibox-val">' + (S.sleepMin ? S.sleepMin + '分钟后' : '关') + '</span></button>' +
+      '<button class="pv-ibox-row" data-act="skip"><span>片头片尾跳过</span><span class="pv-ibox-val">' +
+        ((sk.intro || sk.out) ? (sk.intro ? '片头' + sk.intro + 's ' : '') + (sk.out ? '片尾' + sk.out + 's' : '') : '未设置') + ' ›</span></button>' +
+      '<div class="pv-ibox-sect">其他</div>' +
+      '<button class="pv-ibox-row" data-act="web"><span>网页打开当前视频</span><span class="pv-ibox-val">›</span></button>' +
+      '<button class="pv-ibox-row" data-act="copy"><span>复制播放链接</span><span class="pv-ibox-val">›</span></button>';
+  }
+
+  function openIbox(tab) {
+    var box = $('pv-ibox'); if (!box || !S) return;
+    if (tab === 'src') renderSrcs();
+    if (tab === 'set') renderSet();
+    renderEps();
+    box.querySelectorAll('#pv-ibox-tabs button[data-t]').forEach(function (b) {
+      b.classList.toggle('on', b.dataset.t === tab);
+    });
+    box.querySelectorAll('.pv-ibox-pane').forEach(function (p) {
+      p.classList.toggle('hidden', p.dataset.p !== tab);
+    });
+    box.classList.add('show');
+    if (tab === 'eps') {
+      var on = box.querySelector('.pv-eps .ep.on');
+      if (on) { try { on.scrollIntoView({ block: 'center' }); } catch (e) {} }
+    }
+  }
+
+  function closeIbox() {
+    var box = $('pv-ibox');
+    if (box) box.classList.remove('show');
+  }
+
+  function onIboxTap(ev) {
+    if (!S) return;
+    var src = ev.target.closest('.pv-ibox-src');
+    if (src) {
+      closeIbox();
+      var i = +src.dataset.i;
+      if (S.opts.onSwitchSrc && i !== (S.opts.srcIndex || 0)) S.opts.onSwitchSrc(i);
+      return;
+    }
+    var rate = ev.target.closest('[data-rate]');
+    if (rate) {
+      var sp = +rate.dataset.rate;
+      S.video.playbackRate = sp;
+      var pb = $('pv-speed'); if (pb) pb.textContent = (sp % 1 === 0 ? sp.toFixed(1) : sp) + 'x';
+      renderSet();
+      return;
+    }
+    var sw = ev.target.closest('[data-sw]');
+    if (sw) {
+      var key = sw.getAttribute('data-sw');
+      var st = settings();
+      st[key] = !st[key];
+      saveSettings(st);
+      sw.classList.toggle('on', st[key]);
+      if (key === 'loop') S.video.loop = st.loop;
+      return;
+    }
+    var act = ev.target.closest('[data-act]');
+    if (!act) return;
+    var a = act.getAttribute('data-act');
+    if (a === 'kernel') { showKernelSheet(); return; }
+    if (a === 'sleep') {
+      var seq = [0, 15, 30, 60];
+      var st2 = settings();
+      var next = seq[(seq.indexOf(st2.sleep || 0) + 1) % seq.length];
+      st2.sleep = next; saveSettings(st2);
+      setupSleep(next);
+      toast(next ? '将在' + next + '分钟后暂停' : '定时暂停已关闭');
+      renderSet();
+      return;
+    }
+    if (a === 'skip') { showSkipPanel(); return; }
+    if (a === 'web') { openWebPlay(curUrl()); return; }
+    if (a === 'copy') { copyLink(); return; }
   }
 
   function showSpin(v) { var e = $('pv-spin'); if (e) e.classList.toggle('hidden', !v); }
@@ -279,12 +401,19 @@
       v.playbackRate = sp;
       $('pv-speed').textContent = (sp % 1 === 0 ? sp.toFixed(1) : sp) + 'x';
     };
-    $('pv-eps').onclick = function () { $('pv-drawer').classList.toggle('show'); };
-    $('pv-drawer-close').onclick = function () { $('pv-drawer').classList.remove('show'); };
+    $('pv-eps').onclick = function () { openIbox('eps'); };
+    $('pv-more').onclick = function () { openIbox('set'); };
+    $('pv-ibox-close').onclick = closeIbox;
+    $('pv-ibox-tabs').onclick = function (ev) {
+      var b = ev.target.closest('button[data-t]');
+      if (!b) return;
+      openIbox(b.dataset.t);
+    };
+    $('pv-ibox-body').onclick = onIboxTap;
     $('pv-eps-list').onclick = function (ev) {
       var b = ev.target.closest('.ep');
       if (!b) return;
-      $('pv-drawer').classList.remove('show');
+      closeIbox();
       switchEp(+b.dataset.i);
     };
     $('pv-fs').onclick = function () {
@@ -356,13 +485,13 @@
     /* 点击画面显隐控制条 + 双击播放暂停 */
     var ui = $('pv-ui');
     ui.addEventListener('click', function (ev) {
-      if (ev.target.closest('button') || ev.target.closest('.pv-drawer')) return;
+      if (ev.target.closest('button') || ev.target.closest('.pv-ibox')) return;
       view().classList.toggle('pv-hide');
       scheduleHide();
     });
     var lastTap = 0;
     ui.addEventListener('touchend', function (ev) {
-      if (ev.target.closest('button') || ev.target.closest('.pv-drawer') || ev.target.closest('.pv-bar')) return;
+      if (ev.target.closest('button') || ev.target.closest('.pv-ibox') || ev.target.closest('.pv-bar')) return;
       var now = Date.now();
       if (now - lastTap < 280) { v.paused ? v.play().catch(function(){}) : v.pause(); }
       lastTap = now;
@@ -549,67 +678,6 @@
   }
   window.showKernelSheet = showKernelSheet;
 
-  function renderMore() {
-    var st = settings();
-    var sk = skipGet();
-    var box = $('pv-morepanel');
-    box.innerHTML =
-      '<div class="pv-more-grid">' +
-        '<button data-cc="cast"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 8V6a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6"/><path d="M2 12a9 9 0 0 1 8 8M2 16a5 5 0 0 1 4 4M2 20h.01"/></svg>投屏</button>' +
-        '<button data-cc="track"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 15v-4M12 15V9M17 15v-2"/></svg>音轨</button>' +
-        '<button data-cc="hw"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="7" width="10" height="10" rx="1"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></svg>硬解</button>' +
-        '<button data-cc="fit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>适应</button>' +
-      '</div>' +
-      '<div class="pv-more-row"><span>单集循环</span><span class="pv-switch' + (st.loop ? ' on' : '') + '" data-sw="loop"><i></i></span></div>' +
-      '<div class="pv-more-row"><span>后台播放</span><span class="pv-switch' + (st.bg ? ' on' : '') + '" data-sw="bg"><i></i></span></div>' +
-      '<div class="pv-more-row"><span>长按倍速</span><span class="val">' + (st.longpress ? '3.0' : '关') + '</span><span class="pv-switch' + (st.longpress ? ' on' : '') + '" data-sw="longpress"><i></i></span></div>' +
-      '<div class="pv-more-row"><span>定时睡眠</span><span class="val" data-sleeptext>' + (S.sleepMin ? (S.sleepMin + '分钟后') : '未开启') + '</span></div>' +
-      '<div class="pv-more-row" data-act="sleep"><span style="color:#8a90a0;font-size:12.5px">点此设置睡眠倒计时（15/30/60分钟）</span></div>' +
-      '<button class="pv-more-btn" data-act="skip">片头片尾跳过' +
-        (sk.intro || sk.out ? '（片头' + (sk.intro || 0) + 's / 片尾' + (sk.out || 0) + 's）' : '') + '</button>' +
-      '<button class="pv-more-btn" data-act="webplay">网页打开当前视频</button>';
-    box.classList.add('show');
-  }
-
-  function bindMore() {
-    var box = $('pv-morepanel');
-    box.onclick = function (ev) {
-      var sw = ev.target.closest('[data-sw]');
-      if (sw) {
-        var k = sw.getAttribute('data-sw');
-        var st = settings();
-        st[k] = !st[k];
-        saveSettings(st);
-        sw.classList.toggle('on', st[k]);
-        var row = sw.parentElement.querySelector('.val');
-        if (k === 'longpress' && row) row.textContent = st.longpress ? '3.0' : '关';
-        if (k === 'loop' && S) S.video.loop = st.loop;
-        return;
-      }
-      var cc = ev.target.closest('[data-cc]');
-      if (cc) { toastMsg('网页壳由系统解码器自动处理'); return; }
-      var act = ev.target.closest('[data-act]');
-      if (!act) return;
-      if (act.getAttribute('data-act') === 'sleep') {
-        var seq = [0, 15, 30, 60];
-        var st2 = settings();
-        var next = seq[(seq.indexOf(st2.sleep || 0) + 1) % seq.length];
-        st2.sleep = next; saveSettings(st2);
-        setupSleep(next);
-        var tx = box.querySelector('[data-sleeptext]');
-        if (tx) tx.textContent = next ? (next + '分钟后') : '未开启';
-        if (next) toastMsg('将在' + next + '分钟后暂停');
-        return;
-      }
-      if (act.getAttribute('data-act') === 'skip') { showSkipPanel(); return; }
-      if (act.getAttribute('data-act') === 'webplay') {
-        var eps = S.opts.episodes || [];
-        var u = (eps[S.opts.epIndex] || {}).url || S.opts.url;
-        openWebPlay(u);
-      }
-    };
-  }
-
   function setupSleep(min) {
     if (S.sleepT) { clearTimeout(S.sleepT); S.sleepT = null; }
     S.sleepMin = min || 0;
@@ -637,11 +705,7 @@
 
   function bindExt() {
     $('pv-kernel').onclick = showKernelSheet;
-    $('pv-more').onclick = function () {
-      var box = $('pv-morepanel');
-      if (box.classList.contains('show')) box.classList.remove('show');
-      else { renderMore(); bindMore(); }
-    };
+    var box = $('pv-ibox');
     var st = settings();
     S.video.loop = !!st.loop;
     setupSleep(st.sleep || 0);

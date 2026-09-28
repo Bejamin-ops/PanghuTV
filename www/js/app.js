@@ -84,7 +84,7 @@
     });
     $('#topbar').style.display = (view === 'player' || view === 'detail') ? 'none' : 'flex';
     var detailBar = document.querySelector('.detail-top');
-    if (detailBar) detailBar.style.display = (view === 'detail') ? 'flex' : '';
+    if (detailBar) detailBar.style.display = (view === 'detail') ? 'flex' : 'none';
     var showTab = !!TAB_VIEWS[view];
     document.body.classList.toggle('has-tabbar', showTab);
     $$('#tabbar button').forEach(function (b) {
@@ -452,6 +452,9 @@
     Player.open({
       title: d.name, epName: ctx.ep.name, url: url,
       episodes: p.eps, epIndex: i, resume: ctx.resume, skipKey: d.site + ':' + d.id,
+      sources: (d.play || []).map(function (x) { return { name: x.name, count: x.eps.length }; }),
+      srcIndex: A.srcIdx || 0,
+      onSwitchSrc: function (ni) { switchLineFromPlayer(ni); },
       onProgress: function (pos, dur, epIdx, epName) {
         saveHistory(d, epName || p.eps[epIdx].name, pos, dur);
       },
@@ -464,6 +467,7 @@
           res.ad.baseUrl(res.ad).then(function (base) {
             return res.ad.resolvePlay(base, nextEp.url);
           }).then(function (direct) {
+            o.url = direct;
             Player.update(o);
             saveHistory(d, o.epName, 0, 0);
           }).catch(function () {
@@ -484,6 +488,37 @@
       }
     });
   }
+  /* 播放器面板内切换线路：保持当前集序，重新解析新线路同集 */
+  function switchLineFromPlayer(ni) {
+    var d = curDetail();
+    if (!d) return;
+    var play = d.play || [];
+    if (!play[ni]) { toast('没有这个线路'); return; }
+    A.srcIdx = ni;
+    var p = play[ni];
+    var i = Math.min(window.Player ? Player.curIndex() : 0, p.eps.length - 1);
+    var ep = p.eps[i];
+    var ctx = { d: d, p: p, i: i, ep: ep, resume: 0 };
+    saveHistory(d, ep.name, 0, 0);
+    var res = (window.SPR_ADAPTERS) ? SPR_ADAPTERS.resolve(findSite(d.site)) : null;
+    if (res) {
+      toast('切换到「' + p.name + '」解析中…');
+      res.ad.baseUrl(res.ad).then(function (base) {
+        return res.ad.resolvePlay(base, ep.url);
+      }).then(function (direct) {
+        Player.update({ url: direct, episodes: p.eps, epIndex: i, epName: ep.name, resume: 0,
+          srcIndex: ni, sources: play.map(function (x) { return { name: x.name, count: x.eps.length }; }) });
+      }).catch(function () {
+        toast('该线路解析失败，试试别的线路');
+      });
+    } else {
+      Player.update({ url: ep.url, episodes: p.eps, epIndex: i, epName: ep.name, resume: 0,
+        srcIndex: ni, sources: play.map(function (x) { return { name: x.name, count: x.eps.length }; }) });
+      toast('已切换到「' + p.name + '」');
+    }
+  }
+  window.switchLineFromPlayer = switchLineFromPlayer;
+
   function showSpinCompat(v) {
     var e = document.getElementById('pv-spin');
     if (e) e.classList.toggle('hidden', !v);
