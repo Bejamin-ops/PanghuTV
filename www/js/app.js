@@ -74,14 +74,51 @@
   }
 
   /* ============ 路由 ============ */
-  var VIEWS = ['home', 'search', 'detail', 'live', 'fav', 'settings', 'player'];
-  var TAB_VIEWS = { home: 'home', live: 'live', fav: 'fav' };
+  var VIEWS = ['home', 'short', 'search', 'detail', 'live', 'fav', 'settings', 'player'];
+  var TAB_VIEWS = { home: 'home', short: 'short', live: 'live', fav: 'fav' };
+
+  /* ===== iBox 风格首页频道 ===== */
+  var CHANS = [
+    { id: 'rec', name: '推荐' },
+    { id: 'hotmovie', name: '热门电影', rows: [
+      { k: 'sort', opts: ['热度', '最新', '评分'] },
+      { k: 'region', opts: ['全部', '华语', '欧美', '韩国', '日本'] }
+    ] },
+    { id: 'hotseries', name: '热播剧集', rows: [
+      { k: 'cls', opts: ['综合', '国产剧', '欧美剧', '日剧', '韩剧', '动画'] }
+    ] },
+    { id: 'hotshow', name: '热播综艺', rows: [
+      { k: 'cls', opts: ['综合', '国内', '国外'] }
+    ] },
+    { id: 'moviefilter', name: '电影筛选', rows: [
+      { k: 'cls', opts: ['全部类型', '喜剧', '爱情', '动作', '科幻', '动画', '恐怖', '犯罪', '战争'] },
+      { k: 'region', opts: ['全部地区', '华语', '欧美', '韩国', '日本', '中国大陆'] },
+      { k: 'sort', opts: ['近期热度', '首映时间', '高分优先'] },
+      { k: 'year', opts: ['全部年代', '2026', '2025', '2024', '2023', '2022', '2021', '2020'] }
+    ] },
+    { id: 'tvfilter', name: '电视筛选', rows: [
+      { k: 'form', opts: ['全部', '电视剧', '综艺'] },
+      { k: 'cls', opts: ['全部类型', '喜剧', '爱情', '悬疑', '动画', '武侠', '古装', '家庭'] },
+      { k: 'region', opts: ['全部地区', '华语', '欧美', '国外', '韩国', '日本'] },
+      { k: 'sort', opts: ['近期热度', '首播时间', '高分优先'] },
+      { k: 'year', opts: ['全部年代', '2026', '2025', '2024', '2023', '2022'] },
+      { k: 'platform', opts: ['平台', '腾讯视频', '爱奇艺', '优酷', '湖南卫视', '哔哩哔哩'] }
+    ] },
+    { id: 'movierank', name: '电影榜单', rows: [
+      { k: 'rank', opts: ['实时热门电影', '一周口碑电影榜', '豆瓣电影Top250'] }
+    ] },
+    { id: 'tvrank', name: '电视榜单', rows: [
+      { k: 'rank', opts: ['实时热门电视', '华语口碑剧集榜', '全球口碑剧集榜'] }
+    ] }
+  ];
   function goto(view) {
     if (Player.isOpen() && view !== 'player') Player.close(true);
     VIEWS.forEach(function (v) {
       var el = $('#view-' + v);
       if (el) el.classList.toggle('active', v === view);
     });
+    document.body.classList.toggle('lite', view === 'home' || view === 'short');
+    if (view === 'short' && !A.shortInit) { A.shortInit = true; renderShort(false); }
     $('#topbar').style.display = (view === 'player' || view === 'detail') ? 'none' : 'flex';
     var detailBar = document.querySelector('.detail-top');
     if (detailBar) detailBar.style.display = (view === 'detail') ? 'flex' : 'none';
@@ -171,67 +208,111 @@
     var s = findSite(key);
     if (!s) { var arr = sites(); s = arr[0]; if (!s) { toast('当前接口没有可用站点'); return; } key = s.key; }
     A.site = s; A.cat = ''; A.srcIdx = 0;
+    A.chan = 'rec'; A.cf = {}; A.shortInit = false;
     A.filters = { sub: '', area: '', year: '', by: 'time' };
     A.popAttr = null;
     A.page = 1; A.pagecount = 1; A.seq++;
     Store.set('lastSite', key);
     $('#btn-sites').textContent = s.name + ' ▾';
     $('#grid').innerHTML = '';
-    renderCatTabs([]);
     CMS.classList(s).then(function (c) {
       A.cats = c || [];
-      renderCatTabs();
+      renderChans();
       loadHome(true);
     }).catch(function (e) {
       A.cats = [];
-      renderCatTabs();
+      renderChans();
       toast('分类加载失败：' + e.message);
       loadHome(true);
     });
   }
 
-  function renderCatTabs() {
-    var el = $('#cat-tabs');
-    var html = '<button class="cat' + (A.cat === '' ? ' on' : '') + '" data-cat="">全部</button>';
-    A.cats.forEach(function (c) {
-      html += '<button class="cat' + (String(c.type_id) === String(A.cat) ? ' on' : '') +
-        '" data-cat="' + esc(c.type_id) + '">' + esc(c.type_name) + '</button>';
+  function catByRe(re, excludeRe) {
+    var list = (A.cats || []).filter(function (c) {
+      return re.test(c.type_name || '') && !(excludeRe && excludeRe.test(c.type_name || ''));
     });
-    el.innerHTML = html;
-    renderFilterBar();
+    return list.length ? list[0].type_id : '';
+  }
+  function chanDef() {
+    return CHANS.filter(function (c) { return c.id === A.chan; })[0] || CHANS[0];
+  }
+  function renderChans() {
+    var el = $('#chan-tabs');
+    if (!el) return;
+    el.innerHTML = CHANS.map(function (c) {
+      return '<button class="chan' + (c.id === A.chan ? ' on' : '') + '" data-chan="' + c.id + '">' +
+        esc(c.name) + '</button>';
+    }).join('');
+    renderChanFilters();
+  }
+  function renderChanFilters() {
+    var box = $('#filter-bar');
+    if (!box) return;
+    var def = chanDef();
+    if (!def.rows) { box.innerHTML = ''; return; }
+    box.innerHTML = def.rows.map(function (row) {
+      var cur = A.cf[row.k] || row.opts[0];
+      return '<div class="hf-row">' + row.opts.map(function (o) {
+        return '<button class="hf' + (o === cur ? ' on' : '') + '" data-k="' + row.k + '" data-v="' + esc(o) + '">' +
+          esc(o) + '</button>';
+      }).join('') + '</div>';
+    }).join('');
+  }
+  function chanQuery() {
+    var cf = A.cf || {};
+    var q = { pg: A.page, tid: '', sub: '', area: '', year: '', wd: '', by: 'time' };
+    var movieId = catByRe(/电影|影院/);
+    var seriesId = catByRe(/剧/, /短剧/);
+    var varietyId = catByRe(/综艺|娱乐|晚会/);
+    var animeId = catByRe(/动漫|动画/);
+    function area(v) { return (!v || /全部|地区/.test(v)) ? '' : v; }
+    function year(v) { return (!v || /全部|年代/.test(v)) ? '' : v; }
+    switch (A.chan) {
+      case 'hotmovie':
+        q.tid = movieId; q.area = area(cf.region); break;
+      case 'hotseries':
+        if (cf.cls === '动画' && animeId) q.tid = animeId;
+        else { q.tid = seriesId; q.area = ({ '国产剧': '中国大陆', '欧美剧': '欧美', '日剧': '日本', '韩剧': '韩国' })[cf.cls] || ''; }
+        break;
+      case 'hotshow':
+        q.tid = varietyId; q.area = ({ '国内': '中国大陆', '国外': '欧美' })[cf.cls] || ''; break;
+      case 'moviefilter':
+        q.tid = movieId; q.area = area(cf.region); q.year = year(cf.year); break;
+      case 'tvfilter':
+        q.tid = (cf.form === '综艺') ? varietyId : seriesId;
+        q.area = area(cf.region); q.year = year(cf.year); break;
+      case 'movierank': q.tid = movieId; break;
+      case 'tvrank': q.tid = seriesId; break;
+    }
+    return q;
   }
 
-  function chip(label, attr, val, on) {
-    return '<button class="f-chip' + (on ? ' on' : '') + '" data-attr="' + attr + '" data-val="' + esc(val) + '">' +
-      esc(label) + '</button>';
-  }
-  function renderFilterBar() {
-    var f = A.filters;
-    var byL = (BY_OPTS.filter(function (b) { return b[0] === f.by; })[0] || BY_OPTS[0])[1];
-    var items = [
-      { k: 'by', label: byL, cur: f.by, opts: BY_OPTS.map(function (b) { return { v: b[0], l: b[1] }; }) }
-    ];
-    if (A.cat && CMS.isDemo(A.site)) {
-      var subs = DemoSource.subsOf(A.cat) || [];
-      if (subs.length) {
-        items.push({ k: 'sub', label: f.sub || '类型', cur: f.sub, opts: [{ v: '', l: '全部' }].concat(subs.map(function (s) { return { v: s, l: s }; })) });
-      }
+  function renderShort(more) {
+    var view = $('#view-short');
+    if (!view) return;
+    if (!more) {
+      view.innerHTML = '<nav class="chan-tabs" style="padding-top:14px"><button class="chan on">短剧</button></nav>' +
+        '<section id="grid-short" class="grid"></section>' +
+        '<div style="text-align:center;padding:16px"><button id="short-more" class="set-btn ghost">加载更多</button></div>';
+      A.shortPage = 1;
     }
-    items.push({ k: 'area', label: '地区\u00b7' + (f.area || '\u5168\u90e8'), cur: f.area || '\u5168\u90e8', opts: AREA_OPTS.map(function (v) { return { v: v, l: v }; }) });
-    items.push({ k: 'year', label: (f.year && f.year !== '\u5168\u90e8') ? f.year : '\u5e74\u4efd', cur: f.year || '\u5168\u90e8', opts: YEAR_OPTS.map(function (v) { return { v: v, l: v }; }) });
-    var html = '<div class="filter-row">' + items.map(function (it) {
-      var on = (it.k === 'by' && f.by !== 'time') || (it.k !== 'by' && it.cur !== '\u5168\u90e8' && it.cur !== '');
-      return '<button class="fchip' + (on ? ' on' : '') + '" data-pop="' + it.k + '">' + esc(it.label) + '</button>';
-    }).join('') + '</div>';
-    if (A.popAttr) {
-      var pop = items.filter(function (it) { return it.k === A.popAttr; })[0];
-      if (pop) {
-        html += '<div class="filter-opts">' + pop.opts.map(function (o) {
-          return '<button class="fopt' + (pop.cur === o.v ? ' on' : '') + '" data-attr="' + pop.k + '" data-val="' + esc(o.v) + '">' + esc(o.l) + '</button>';
-        }).join('') + '</div>';
+    var grid = $('#grid-short');
+    var btn = $('#short-more');
+    if (btn) { btn.disabled = true; btn.textContent = '加载中…'; }
+    var q = { pg: A.shortPage, tid: catByRe(/短剧|剧场/), sub: '', area: '', year: '', wd: '', by: 'time' };
+    CMS.list(A.site, q).then(function (r) {
+      var html = r.list.map(function (v) { return cardHtml(v); }).join('');
+      if (more) grid.insertAdjacentHTML('beforeend', html);
+      else grid.innerHTML = html || '<div class="empty">当前接口没有短剧分类</div>';
+      if (btn) {
+        var hasMore = A.shortPage < (r.pagecount || 1) && r.list.length;
+        btn.style.display = hasMore ? 'inline-block' : 'none';
+        btn.disabled = false; btn.textContent = '加载更多';
       }
-    }
-    $('#filter-bar').innerHTML = html;
+    }).catch(function (e) {
+      if (!more) grid.innerHTML = '<div class="empty">加载失败：' + esc(e.message) + '</div>';
+      if (btn) { btn.disabled = false; btn.textContent = '加载更多'; }
+    });
   }
 
   function skeleton(n) {
@@ -254,19 +335,16 @@
     if (reset) { A.page = 1; $('#grid').innerHTML = skeleton(12); $('#sentinel').style.display = 'none'; }
     A.loading = true;
     var seq = ++A.seq;
-    CMS.list(A.site, {
-      pg: A.page, tid: A.cat, sub: A.filters.sub,
-      area: A.filters.area === '全部' ? '' : A.filters.area,
-      year: A.filters.year === '全部' ? '' : A.filters.year,
-      wd: '', by: A.filters.by
-    }).then(function (r) {
+    var q = chanQuery(); q.pg = A.page;
+    CMS.list(A.site, q).then(function (r) {
       if (seq !== A.seq) return;
       A.loading = false;
       A.pagecount = r.pagecount || 1;
       var html = r.list.map(function (v) { return cardHtml(v); }).join('');
       if (reset) {
         $('#grid').innerHTML = html || '<div class="empty">没有找到内容</div>';
-        renderBanner();
+        if (A.chan === 'rec') renderBanner();
+        else $('#banner').innerHTML = '';
       }
       else $('#grid').insertAdjacentHTML('beforeend', html);
       if (!reset && !r.list.length) toast('没有更多了');
@@ -1021,29 +1099,29 @@
       doSearch($('#search-input').value);
       $('#search-input').blur();
     };
-    $('#cat-tabs').onclick = function (ev) {
-      var b = ev.target.closest('.cat');
-      if (!b) return;
-      A.cat = b.dataset.cat;
-      renderCatTabs();
+    $('#chan-tabs').onclick = function (ev) {
+      var b = ev.target.closest('.chan');
+      if (!b || b.dataset.chan === A.chan) return;
+      A.chan = b.dataset.chan;
+      A.cf = {};
+      A.page = 1; A.pagecount = 1; A.seq++;
+      renderChans();
       loadHome(true);
     };
     $('#filter-bar').onclick = function (ev) {
-      var p = ev.target.closest('[data-pop]');
-      if (p) {
-        var k = p.getAttribute('data-pop');
-        A.popAttr = (A.popAttr === k) ? null : k;
-        renderFilterBar();
-        return;
-      }
-      var o = ev.target.closest('.fopt');
-      if (!o) return;
-      var attr = o.getAttribute('data-attr');
-      A.filters[attr] = o.getAttribute('data-val');
-      A.popAttr = null;
-      renderFilterBar();
+      var c = ev.target.closest('.hf');
+      if (!c) return;
+      var k = c.getAttribute('data-k');
+      var v = c.getAttribute('data-v');
+      if ((A.cf[k] || '') === v) return;
+      A.cf[k] = v;
+      A.page = 1; A.pagecount = 1; A.seq++;
+      renderChanFilters();
       loadHome(true);
     };
+    $('#view-short').addEventListener('click', function (ev) {
+      if (ev.target.closest('#short-more')) { A.shortPage++; renderShort(true); }
+    });
     document.addEventListener('click', function (ev) {
       var jm = ev.target.closest('[data-jumpsite]');
       if (jm) { switchSite(jm.getAttribute('data-jumpsite')); return; }
