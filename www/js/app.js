@@ -684,21 +684,33 @@
     } catch (e) {}
     renderCfgList();
     $('#cfg-add').onclick = function () {
-      var url = $('#cfg-url').value.trim();
+      var url = $('#cfg-url').value.trim().replace(/[\s\u200b-\u200d\ufeff]+/g, '');
       var name = $('#cfg-name').value.trim();
-      if (!/^https?:\/\//.test(url)) { toast('URL 不合法'); return; }
+      if (!/^https?:\/\//.test(url)) { toast('URL 不合法（要以 http(s):// 开头）'); return; }
       toast('拉取接口中…');
-      HTTP.get(url).then(function (txt) {
-        var j = JSON.parse(txt);
-        if (!j || !j.sites || !j.sites.length) throw new Error('配置里没有 sites');
-        addCfg(j, name || j.name || url, url);
-      }).catch(function (e) {
-        toast('导入失败：' + e.message);
-      });
+      var tryFetch = function (attempt) {
+        HTTP.get(url, 30000).then(function (txt) {
+          var clean = (txt || '').replace(/^\uFEFF/, '').trim();
+          if (!clean) throw new Error('服务器返回空内容（地址可能失效或被网络拦截）');
+          var j;
+          try { j = JSON.parse(clean); }
+          catch (pe) {
+            throw new Error('返回的不是完整JSON：开头「' + clean.slice(0, 26).replace(/</g, '＜') + '」(' + clean.length + '字节)');
+          }
+          if (!j || !j.sites || !j.sites.length) throw new Error('配置里没有 sites');
+          addCfg(j, name || j.name || url, url);
+        }).catch(function (e) {
+          if (attempt < 1) { setTimeout(function () { tryFetch(1); }, 900); return; }
+          var m = (e && e.message) || String(e);
+          toast('导入失败：' + m);
+        });
+      };
+      tryFetch(0);
     };
     $('#cfg-import').onclick = function () {
       try {
-        var j = JSON.parse($('#cfg-json').value);
+        var raw = ($('#cfg-json').value || '').replace(/^\uFEFF/, '').trim();
+        var j = JSON.parse(raw);
         if (!j || !j.sites || !j.sites.length) throw new Error('配置里没有 sites');
         addCfg(j, j.name || '粘贴配置', '');
       } catch (e) { toast('导入失败：' + e.message); }
