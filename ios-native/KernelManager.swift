@@ -92,19 +92,27 @@ final class VLCPlayerViewController: UIViewController {
             progressLabel.heightAnchor.constraint(equalToConstant: 26),
             progressLabel.widthAnchor.constraint(greaterThanOrEqualToConstant: 96),
         ])
-        mp.timeChanged = { [weak self] _ in self?.refreshLabel() }
         mp.play()
+        timeObserver = NotificationCenter.default.addObserver(
+            forName: NSNotification.Name("VLCMediaPlayerTimeChanged"),
+            object: mp, queue: .main) { [weak self] _ in self?.refreshLabel() }
+    }
+
+    private var timeObserver: NSObjectProtocol?
+
+    deinit {
+        if let o = timeObserver { NotificationCenter.default.removeObserver(o) }
     }
 
     private func refreshLabel() {
         guard let mp = player else { return }
-        let t = TimeInterval(mp.time.intValue) / 1000
-        let d = mp.duration?.timeIntervalSince1970 ?? 0
-        func f(_ s: TimeInterval) -> String {
-            let m = Int(s) / 60, sec = Int(s) % 60
-            return String(format: "%d:%02d", m, sec)
+        let tMs = Int(mp.time.intValue)
+        let dMs = mp.media.flatMap { $0.length }?.intValue ?? 0
+        func f(_ ms: Int) -> String {
+            let s = max(0, ms / 1000)
+            return String(format: "%d:%02d", s / 60, s % 60)
         }
-        progressLabel.text = d > 0 ? "\(f(t)) / \(f(d))" : "\(f(t))"
+        progressLabel.text = dMs > 0 ? "\(f(tMs)) / \(f(dMs))" : "\(f(tMs))"
     }
 
     @objc private func closeTapped() {
