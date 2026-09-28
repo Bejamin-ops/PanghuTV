@@ -1,6 +1,14 @@
 /* Panghu影视 · 播放器（hls.js 动态加载 + WebKit原生HLS兜底 + 手势/进度/选集） */
 (function () {
   'use strict';
+  /* 壳内把不可用的外接内核偏好归零（nPlayer/Infuse 需商店App接力） */
+  if (window.__PANGHU_NATIVE__ && window.Store) {
+    var st0 = Store.get('pvset', {});
+    var dirty = false;
+    if (st0.kernel === 'nplayer' || st0.kernel === 'infuse') { st0.kernel = 'auto'; dirty = true; }
+    if (st0.used === 'nplayer' || st0.used === 'infuse') { st0.used = 'builtin'; dirty = true; }
+    if (dirty) Store.set('pvset', st0);
+  }
   var HLS_CDNS = [
     'https://cdn.jsdelivr.net/npm/hls.js@1.5.13/dist/hls.min.js',
     'https://unpkg.com/hls.js@1.5.13/dist/hls.min.js'
@@ -105,7 +113,9 @@
       this.update(opts, true);
       startClock();
       var k = kernelPref();
-      if ((k === 'vlc' || k === 'nplayer' || k === 'infuse' || k === 'web') && S.opts.url) {
+      var jumpable = (k === 'vlc' || k === 'web') ||
+        (!window.__PANGHU_NATIVE__ && (k === 'nplayer' || k === 'infuse'));
+      if (jumpable && S.opts.url) {
         setTimeout(function () {
           if (S) { if (k === 'web') openWebPlay(S.opts.url); else jumpKernel(k, S.opts.url); }
         }, 350);
@@ -429,9 +439,16 @@
     v.addEventListener('waiting', function () { showSpin(true); });
     v.addEventListener('playing', function () { showSpin(false); showBig(false); clearTimeout(S && S.watchT); });
     v.addEventListener('canplay', function () { showSpin(false); clearTimeout(S && S.watchT); });
+    /* 原生壳内：AVPlayer 失败 → 自动切内置 VLC 真内核再试一次 */
     v.addEventListener('error', function () {
       if (!S || (!v.src && !S.hls)) return;
-      /* 原生播放失败且 hls.js 没试过 → 自动降级再试一次 */
+      if (window.__PANGHU_NATIVE__ && window.webkit && window.webkit.messageHandlers.panghuPlay && curUrl()) {
+        toastMsg('内置内核失败，切换 VLC 内核…');
+        setTimeout(function () {
+          if (S) window.webkit.messageHandlers.panghuPlay.postMessage({ url: curUrl(), kernel: 'vlc' });
+        }, 300);
+        return;
+      }
       if (S.nativeTried && !S.hlsTried && S.tryHls) { S.tryHls(curUrl() || v.src); return; }
       showErr('此线路播放失败：可重试 / 网页播放 / 复制链接，或到详情页换线路换源');
     });
@@ -662,17 +679,24 @@
         } },
       { label: 'VLC -> 建议播放 4K 选择' + mark('vlc'), sub: NATIVE_KERNEL ? '全格式 · app 内置 VLC 真内核' : '全格式 · 需安装 VLC for iOS', i: 2, fn: function () {
           setKernelPref('vlc'); url ? jumpKernel('vlc', url) : toastMsg('已设为默认：VLC');
-        } },
-      { label: 'nPlayer -> 缓冲稍慢 / 支持格式多' + mark('nplayer'), sub: '全格式硬解 · 需安装 nPlayer', i: 3, fn: function () {
-          setKernelPref('nplayer'); url ? jumpKernel('nplayer', url) : toastMsg('已设为默认：nPlayer');
-        } },
-      { label: 'Infuse -> 4K 画质首选' + mark('infuse'), sub: '海报墙 · 需安装 Infuse', i: 4, fn: function () {
-          setKernelPref('infuse'); url ? jumpKernel('infuse', url) : toastMsg('已设为默认：Infuse');
-        } },
+        } }
+    ];
+    /* 壳内 nPlayer/Infuse 依赖商店 App 接力，不稳定则隐藏 */
+    if (!window.__PANGHU_NATIVE__) {
+      items.push(
+        { label: 'nPlayer -> 缓冲稍慢 / 支持格式多' + mark('nplayer'), sub: '全格式硬解 · 需安装 nPlayer', i: 3, fn: function () {
+            setKernelPref('nplayer'); url ? jumpKernel('nplayer', url) : toastMsg('已设为默认：nPlayer');
+          } },
+        { label: 'Infuse -> 4K 画质首选' + mark('infuse'), sub: '海报墙 · 需安装 Infuse', i: 4, fn: function () {
+            setKernelPref('infuse'); url ? jumpKernel('infuse', url) : toastMsg('已设为默认：Infuse');
+          } }
+      );
+    }
+    items.push(
       { label: '网页播放 -> 站点自带播放器' + mark('web'), sub: '部分站点可用', i: 5, fn: function () {
           setKernelPref('web'); url ? openWebPlay(url) : toastMsg('已设为默认：网页播放');
         } }
-    ];
+    );
     if (url) items.push({ label: '复制播放链接', i: 6, fn: copyLink });
     showSheet('默认播放器', items);
   }
