@@ -1,0 +1,56 @@
+name: PanghuTV
+options:
+  bundleIdPrefix: com.panghu
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    CODE_SIGNING_ALLOWED: "NO"
+    CODE_SIGNING_REQUIRED: "NO"
+    CODE_SIGN_IDENTITY: ""
+    DEVELOPMENT_TEAM: ""
+    ENABLE_BITCODE: "NO"
+    CURRENT_PROJECT_VERSION: "30"
+    MARKETING_VERSION: "3.0.0"
+    TARGETED_DEVICE_FAMILY: "1,2"
+targets:
+  PanghuTV:
+    type: application
+    platform: iOS
+    sources:
+      - path: ios-native
+      - path: www
+        type: folder
+        buildPhase: resources
+      - path: icons/AppIcon60x60@2x.png
+        buildPhase: resources
+      - path: icons/AppIcon60x60@3x.png
+        buildPhase: resources
+    info:
+      path: ios-native/Info.plist
+      properties:
+        CFBundleDisplayName: "Panghu影视"
+        CFBundleShortVersionString: "3.0.0"
+        CFBundleVersion: "30"
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoads: true
+        UIBackgroundModes:
+          - audio
+        UIStatusBarStyle: UIStatusBarStyleLightContent
+        UIViewControllerBasedStatusBarAppearance: false
+        CFBundleIconFiles:
+          - AppIcon60x60
+        ITSAppUsesNonExemptEncryption: false
+        LSRequiresIPhoneOS: true
+schemes:
+  PanghuTV:
+    build:
+      targets:
+        PanghuTV: all

@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0b0e14">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Panghu影视">
+<title>Panghu影视</title>
+<link rel="apple-touch-icon" href="assets/icon-180.png">
+<link rel="icon" href="assets/icon-180.png">
+<link rel="stylesheet" href="css/app.css">
+<link rel="stylesheet" href="css/player-ext.css">
+</head>
+<body>
+<div id="app">
+
+  <header id="topbar" class="topbar">
+    <button id="btn-sites" class="site-chip">加载中 ▾</button>
+    <form id="search-form" class="searchbox"><input id="search-input" type="search" placeholder="搜影片 / 剧名…" enterkeyhint="search"></form>
+    <button id="btn-live" class="icon-btn" title="直播">📺</button>
+    <button id="btn-fav" class="icon-btn" title="收藏/历史">♥</button>
+    <button id="btn-settings" class="icon-btn" title="设置">⚙</button>
+  </header>
+
+  <main id="view-home" class="view">
+    <div id="banner"></div>
+    <nav id="cat-tabs" class="cat-tabs"></nav>
+    <div id="filter-bar" class="filter-bar"></div>
+    <section id="grid" class="grid"></section>
+    <div id="sentinel" class="sentinel"><span class="spinner"></span><span class="sentinel-t">加载中…</span></div>
+  </main>
+
+  <main id="view-search" class="view"></main>
+  <main id="view-detail" class="view"></main>
+  <main id="view-live" class="view"></main>
+  <main id="view-fav" class="view"></main>
+  <main id="view-settings" class="view"></main>
+  <main id="view-player" class="view view-player"></main>
+
+  <div id="drawer-mask" class="mask"></div>
+  <aside id="drawer" class="drawer">
+    <div class="drawer-head">切换影视源</div>
+    <div id="drawer-list" class="drawer-list"></div>
+  </aside>
+
+  <nav id="tabbar" class="tabbar">
+    <button data-tab="home" class="on">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg>
+      <span>首页</span>
+    </button>
+    <button data-tab="live">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="15" height="12" rx="2"/><path d="m17 10 5-3v10l-5-3"/></svg>
+      <span>直播</span>
+    </button>
+    <button data-tab="fav">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h7v7H4z"/><path d="M13 4h7v4h-7z"/><path d="M13 11h7v9h-7z"/><path d="M4 14h7v6H4z"/></svg>
+      <span>我的</span>
+    </button>
+  </nav>
+
+  <div id="toast" class="toast"></div>
+</div>
+
+<script>
+window.__errs = [];
+window.addEventListener('error', function (e) {
+  window.__errs.push('E:' + (e.message || 'unknown') + '@' + (e.filename || '').split('/').pop() + ':' + (e.lineno || '?'));
+});
+window.addEventListener('unhandledrejection', function (e) {
+  var r = e.reason;
+  window.__errs.push('P:' + ((r && r.message) || r || 'rejection'));
+});
+</script>
+<script src="js/store.js"></script>
+<script src="js/demo.js"></script>
+<script src="js/cms.js"></script>
+<script src="js/player.js"></script>
+<script src="js/spider.js"></script>
+<script src="js/spider-adapters.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

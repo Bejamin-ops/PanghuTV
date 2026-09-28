@@ -1,0 +1,45 @@
+
+/* ===== 播放器扩展：action sheet / 更多面板 / 片头片尾 ===== */
+.pv-sheet-mask{position:absolute;inset:0;z-index:20;background:rgba(0,0,0,.45);display:none;align-items:flex-end}
+.pv-sheet-mask.show{display:flex}
+.pv-sheet{background:#12161f;width:100%;border-radius:16px 16px 0 0;padding:0 0 24px;
+  max-height:70%;overflow-y:auto}
+.pv-sheet-title{text-align:center;color:#8a90a0;font-size:13px;padding:16px 0 8px}
+.pv-sheet-item{display:block;width:100%;background:transparent;border:0;border-top:1px solid #1d2432;
+  padding:16px;color:#6aa9ff;font-size:16.5px;text-align:center}
+.pv-sheet-item:first-of-type{border-top:0}
+.pv-sheet-item.sub{color:#8a90a0;font-size:13px;padding:10px}
+.pv-sheet-cancel{margin:12px 12px 0;width:calc(100% - 24px);background:#1b2230;border-radius:14px;
+  padding:15px;color:#6aa9ff;font-size:16.5px;font-weight:600;border:0}
+
+.pv-more{position:absolute;top:0;right:0;bottom:0;width:min(300px,58%);z-index:19;
+  background:rgba(24,26,30,.96);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+  transform:translateX(102%);transition:transform .22s;overflow-y:auto;padding:14px 0 30px}
+.pv-more.show{transform:translateX(0)}
+.pv-more-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:0 8px 10px;border-bottom:1px solid rgba(255,255,255,.08)}
+.pv-more-grid button{background:none;border:0;color:#e8eaef;font-size:11px;padding:10px 0;
+  display:flex;flex-direction:column;align-items:center;gap:5px}
+.pv-more-grid button svg{width:20px;height:20px}
+.pv-more-grid button.off{color:#5b6472}
+.pv-more-row{display:flex;align-items:center;justify-content:space-between;padding:15px 16px;color:#e8eaef;font-size:14px}
+.pv-more-row+.pv-more-row{border-top:1px solid rgba(255,255,255,.05)}
+.pv-more-row .val{color:#8a90a0;font-size:13px}
+.pv-switch{width:44px;height:26px;border-radius:14px;background:#3a3d44;position:relative;transition:background .2s;flex:none}
+.pv-switch.on{background:#34c759}
+.pv-switch i{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .2s}
+.pv-switch.on i{left:21px}
+.pv-more-btn{display:block;width:calc(100% - 32px);margin:12px 16px 0;background:rgba(255,255,255,.1);
+  border:0;border-radius:10px;color:#fff;padding:11px;font-size:13.5px}
+.pv-skip-cards{display:flex;gap:10px;padding:4px 14px}
+.pv-skip-card{flex:1;background:rgba(255,255,255,.08);border-radius:12px;padding:10px;text-align:center;color:#e8eaef}
+.pv-skip-card .lbl{font-size:11px;color:#8a90a0}
+.pv-skip-card .sec{font-size:17px;font-weight:800;margin:3px 0}
+.pv-skip-card input{width:64px;background:rgba(255,255,255,.12);border:0;border-radius:8px;color:#fff;
+  text-align:center;font-size:16px;padding:6px 0;outline:none}
+.pv-sheet-item .pv-sheet-sub{display:block;font-size:12px;color:#8a90a0;margin-top:3px}
+
+/* 播放错误面板按钮组 */
+.pv-err-btns{display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap}
+.pv-err-btns button{background:rgba(255,255,255,.12);color:#fff;border:0;border-radius:9px;
+  padding:8px 14px;font-size:13px;font-weight:600}
+.pv-err-btns button:active{background:rgba(255,255,255,.24)}
