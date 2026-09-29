@@ -467,3 +467,11 @@ body.native .tabbar{padding:6px 0 8px;background:rgba(255,255,255,.98)}
 .c-name{font-size:12px;line-height:17px;height:17px;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
 .c-site{display:none!important}
 .poster .remark{font-size:9.5px;padding:2px 3px}
+
+/* banner 豆瓣真图 + 角标单行 */
+.poster .remark{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+body.lite .sec-title{font-size:17px;font-weight:800;color:#1b1f27;margin:10px 0 8px}
+.carousel-cap{padding:14px 12px 8px}
+.carousel-name{font-size:15px}
+.carousel-sub{font-size:10.5px;margin-top:2px;color:#dfe7f5}
+.carousel-dots{bottom:8px}

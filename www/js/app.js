@@ -1135,25 +1135,27 @@
   function renderBanner() {
     var el = $('#banner');
     if (!el) return;
-    var isClean = A.site && CMS.isDemo(A.site) && !A.cat && !A.filters.sub &&
-      (A.filters.area === '全部' || A.filters.area === '') &&
-      (A.filters.year === '全部' || A.filters.year === '');
-    if (!isClean) { el.innerHTML = ''; stopCarousel(); return; }
-    var top = DemoSource.list({ by: 'hits', pg: 1 }).list.slice(0, 6);
-    if (!top.length) { el.innerHTML = ''; return; }
-    el.innerHTML = '<div class="carousel" id="carousel">' +
-      '<div class="carousel-track" id="car-track">' +
-      top.map(function (v) {
-        return '<button class="carousel-slide js-card" data-site="' + esc(A.site.key) + '" data-id="' + esc(v.vod_id) + '">' +
-          '<img src="' + esc(v.vod_pic) + '">' +
-          '<div class="carousel-cap"><div class="carousel-name">' + esc(v.vod_name) + '</div>' +
-          '<div class="carousel-sub">' + esc(v.vod_remarks) + ' · ★' + esc(v.vod_score) + ' · ' + esc(v.type_name) + '</div></div></button>';
-      }).join('') + '</div>' +
-      '<div class="carousel-dots" id="car-dots">' +
-      top.map(function (_, i) { return '<i' + (i === 0 ? ' class="on"' : '') + '></i>'; }).join('') +
-      '</div></div>' +
-      '<div class="sec-title" style="padding:6px 14px 2px">🔥 热门推荐</div>';
-    startCarousel(top.length);
+    if (!window.Douban) { el.innerHTML = ''; return; }
+    el.innerHTML = '<div class="carousel" id="carousel"><div class="carousel-track" id="car-track">' +
+      '<div style="flex:0 0 100%;aspect-ratio:12/5;background:#eef0f4"></div></div></div>';
+    Douban.byTag('movie', '热门').then(function (items) {
+      if (!items || !items.length) { el.innerHTML = ''; return; }
+      var top = items.slice(0, 6);
+      el.innerHTML = '<div class="carousel" id="carousel">' +
+        '<div class="carousel-track" id="car-track">' +
+        top.map(function (v) {
+          return '<button class="carousel-slide js-dcard" data-title="' + esc(v.title) + '">' +
+            '<img src="' + esc(v.pic) + '">' +
+            '<div class="carousel-cap"><div class="carousel-name">' + esc(v.name) + '</div>' +
+            (v.rate ? '<div class="carousel-sub">豆瓣 ' + esc(v.rate) + ' 分</div>' : '') +
+            '</div></button>';
+        }).join('') + '</div>' +
+        '<div class="carousel-dots" id="car-dots">' +
+        top.map(function (_, i) { return '<i' + (i === 0 ? ' class="on"' : '') + '></i>'; }).join('') +
+        '</div></div>' +
+        '<div class="sec-title" style="padding:8px 14px 2px">推荐</div>';
+      startCarousel(top.length);
+    }).catch(function () { el.innerHTML = ''; });
   }
   function startCarousel(n) {
     stopCarousel();
