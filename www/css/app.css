@@ -475,3 +475,6 @@ body.lite .sec-title{font-size:17px;font-weight:800;color:#1b1f27;margin:10px 0 
 .carousel-name{font-size:15px}
 .carousel-sub{font-size:10.5px;margin-top:2px;color:#dfe7f5}
 .carousel-dots{bottom:8px}
+.carousel-cap{text-align:left}
+.carousel-cap .carousel-name{text-align:left}
+.carousel-cap .carousel-sub{text-align:left}
