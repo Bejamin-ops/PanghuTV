@@ -458,3 +458,12 @@ body.native .tabbar{padding:6px 0 8px;background:rgba(255,255,255,.98)}
 /* 返回按钮下移居中 + 命中区加大 */
 .detail-top,.page-top{padding:calc(env(safe-area-inset-top) + 13px) 12px 12px}
 .detail-top .icon-btn,.page-top .icon-btn{width:40px;height:40px}
+
+/* ===== 网格 4 列 · 图文统一尺寸 · 顺序排列 ===== */
+.grid{grid-template-columns:repeat(4,1fr)!important;gap:8px!important}
+@media(min-width:760px){.grid{grid-template-columns:repeat(6,1fr)!important;gap:10px}}
+.card{display:flex;flex-direction:column}
+.poster{aspect-ratio:2/3}
+.c-name{font-size:12px;line-height:17px;height:17px;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center}
+.c-site{display:none!important}
+.poster .remark{font-size:9.5px;padding:2px 3px}
